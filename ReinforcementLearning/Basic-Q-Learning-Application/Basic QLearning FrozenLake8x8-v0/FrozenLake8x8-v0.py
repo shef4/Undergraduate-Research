@@ -7,6 +7,7 @@ Created on Thu Jun 11 00:53:24 2020
 
 import gym
 import numpy as np 
+import matplotlib.pyplot as plt
 
 #1. Load Enviroment and Q-table
 
@@ -17,10 +18,14 @@ Q = np.zeros([env.observation_space.n,env.action_space.n])
 
 #2. Parameters of Q-learning
 
-eta = .628
+eta = .648
 g = .9
-episodes = 10000000
+episodes = 200000
+
+SHOW_EVERY= 500
+
 rev_list = [] # rewards per episode calculate
+steps_ep = [] #total steps per ep
 
 
 #3. Q-learning Algorithm
@@ -31,9 +36,10 @@ for i in range(episodes):
     rAll = 0
     d = False
     j = 0
+    steps = 0
     
     # Q-Table Learning algorithm
-    while j < 9999:
+    while j <1000:
         #env.render()
         j += 1
         # select action from Q
@@ -45,16 +51,27 @@ for i in range(episodes):
         
         rAll += r
         s = s1
+        steps += 1
         if d==True:
             break
+    
     rev_list.append(rAll)
+    steps_ep.append(steps)
+    
     #env.render()
+
 
 rewardSum = "Reward Sum on all episodes " + str(sum(rev_list)/episodes)
 print(rewardSum)
 print("Final Values Q")
 print(Q)
 
+plt.plot(np.arange(0., episodes, 2000. ) , np.sum(np.array(rev_list).reshape(-1, 2000), axis=1), label='Steps per ep')
+#plt.plot(np.arange(0., episodes, 500. ) , np.mean(np.array(steps_ep).reshape(-1, 500), axis=1), label='Steps per ep')
+plt.legend(loc=3)
+plt.show()
+
+'''
 #see model play with updated Q table
 # Reset environment
 s = env.reset()
