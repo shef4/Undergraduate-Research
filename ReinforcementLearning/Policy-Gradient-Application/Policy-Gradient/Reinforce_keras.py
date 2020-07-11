@@ -4,7 +4,7 @@ Created on Fri Jun 26 18:31:48 2020
 
 @author: sefun
 """
-from keras.layers import Dense,Activation, Input
+from keras.layers import Dense,Activation, Input, concatenate, Flatten
 from keras.models import Model, load_model
 from keras.optimizers import Adam
 import keras.backend as K
@@ -32,15 +32,19 @@ class Agent(object):
         self.model_file = fname
         
     def build_policy_network(self):
-        predict = Input(shape=(self.input_dims,))
+        predict = Input(shape=(self.input_dims,self.input_dims))
         dense1 = Dense(self.fc1_dims, activation='relu')(predict)
         dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
         probs = Dense(self.n_actions, activation='softmax')(dense2)
         
-        policy = Input(shape=[(self.input_dims,),[1]]
-        dense1 = Dense(self.fc1_dims, activation='relu')(policy)
-        dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
-        probs = Dense(self.n_actions, activation='softmax')(dense2)
+        policy = Input(shape=(self.input_dims,self.input_dims)) #(none, 3, 3, 1)
+        advantages = Input(shape=[1])
+        inputA = Flatten()(policy)
+        inputB = Flatten()(advantages)
+        combined = concatenate([inputA, inputB])
+        dense1po = Dense(self.fc1_dims, activation='relu')(combined)
+        dense2po = Dense(self.fc2_dims, activation='relu')(dense1po)
+        probspo = Dense(self.n_actions, activation='softmax')(dense2po)
         
         
         def custom_loss(y_true, y_pred):
@@ -51,7 +55,7 @@ class Agent(object):
         
         
         
-        policy = Model(input=[policy], output=[probs])
+        policy = Model(input=[policy,advantages], output=[probspo])
         policy.compile(optimizer=Adam(lr=self.lr), loss=custom_loss)
         
         
