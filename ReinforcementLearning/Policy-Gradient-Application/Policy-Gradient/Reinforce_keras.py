@@ -32,20 +32,17 @@ class Agent(object):
         self.model_file = fname
         
     def build_policy_network(self):
-        predict = Input(shape=(self.input_dims,self.input_dims))
-        dense1 = Dense(self.fc1_dims, activation='relu')(predict)
+        
+        
+        env2d = Input(shape=(self.input_dims,self.input_dims))
+        env = Flatten()(env2d)
+        
+        advantages = Input(shape=[1])
+        
+        dense1 = Dense(self.fc1_dims, activation='relu')(env)
         dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
         probs = Dense(self.n_actions, activation='softmax')(dense2)
-        
-        policy = Input(shape=(self.input_dims,self.input_dims)) #(none, 3, 3, 1)
-        advantages = Input(shape=[1])
-        inputA = Flatten()(policy)
-        inputB = Flatten()(advantages)
-        combined = concatenate([inputA, inputB])
-        dense1po = Dense(self.fc1_dims, activation='relu')(combined)
-        dense2po = Dense(self.fc2_dims, activation='relu')(dense1po)
-        probspo = Dense(self.n_actions, activation='softmax')(dense2po)
-        
+       
         
         def custom_loss(y_true, y_pred):
             out = K.clip(y_pred, 1e-8,  1-1e-8)
@@ -55,16 +52,16 @@ class Agent(object):
         
         
         
-        policy = Model(input=[policy,advantages], output=[probspo])
+        policy = Model(input=[env2d,advantages], output=[probs])
         policy.compile(optimizer=Adam(lr=self.lr), loss=custom_loss)
         
         
-        predict = Model(input=[predict], output=[probs])
+        predict = Model(input=[env2d], output=[probs])
         
         return policy, predict
     
     def choose_action(self, observation):
-        state = observation
+        state = observation[np.newaxis, :]
         probabilities = self.predict.predict(state)[0]
         action = np.random.choice(self.action_space, p=probabilities)
         
@@ -100,7 +97,7 @@ class Agent(object):
         std = np.std(G) if np.std(G) > 0 else 1
         self.G = (G-mean)/std
         
-        cost = self.policy.train_on_batch([state_memory[0,:,:] ,self.G], actions)
+        cost = self.policy.train_on_batch([state_memory ,self.G], actions)
         
         self.state_memory = []
         self.action_memory = []

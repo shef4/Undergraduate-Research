@@ -25,7 +25,7 @@ if __name__ == '__main__':
     score_history = []
     
     #print observation
-    n_episodes = 2000
+    n_episodes = 20
    
     for i in range(n_episodes):
         done=False
@@ -33,7 +33,7 @@ if __name__ == '__main__':
         observation = env.reset()
         while not done:
             action = agent.choose_action(observation)
-
+            
             
             observation_, reward, done, info = env.step(action)
             agent.store_transition(observation, action, reward)

@@ -249,16 +249,16 @@ class CGridWorld(object):
             
             resultingState = self.stateUpdate(self.setState(), size=3, action = action, p=0.6)
             
-            reward += 1
+            reward += 15
             
             if resultingState == None:
-                reward += -100
+                reward += -10
               
             #prefred action function
             if self.actionSpace[action] == self.prefActionSpace[self.prefAction]:
-                reward += -1
+                reward += 1
             else:
-                reward += -2
+                reward += 1
             
             self.setState(resultingState, action)
             return resultingState, reward, \
