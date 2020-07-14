@@ -268,12 +268,6 @@ class CGridWorld(object):
             
             if resultingState == None:
                 reward += -100
-              
-            #prefred action function
-            if action == self.prefAction:
-                reward += -1
-            else:
-                reward += -2
             
             return resultingState, reward, \
                    done, None

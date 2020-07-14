@@ -25,7 +25,7 @@ if __name__ == '__main__':
     score_history = []
     
     #print observation
-    n_episodes = 20
+    n_episodes = 200000
    
     for i in range(n_episodes):
         done=False
