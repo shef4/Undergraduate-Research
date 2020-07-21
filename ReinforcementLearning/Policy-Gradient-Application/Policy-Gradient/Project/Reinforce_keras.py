@@ -9,7 +9,8 @@ from keras.models import Model, load_model
 from keras.optimizers import Adam
 import keras.backend as K
 import numpy as np
-
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import LabelEncoder
 
 class Agent(object):
     def __init__(self, ALPHA, GAMMA=0.99,n_actions=4,
@@ -33,7 +34,6 @@ class Agent(object):
         
     def build_policy_network(self):
         
-        
         env2d = Input(shape=(self.input_dims,self.input_dims))
         env = Flatten()(env2d)
         
@@ -49,7 +49,6 @@ class Agent(object):
             log_lik = y_true*K.log(out)
             
             return K.sum(-log_lik*advantages)
-        
         
         
         policy = Model(input=[env2d,advantages], output=[probs])
@@ -75,14 +74,12 @@ class Agent(object):
         self.reward_memory.append(reward)
         
     #find position around agent funtion    
+       
         
     def learn(self):
         state_memory = np.array(self.state_memory)
         action_memory = np.array(self.action_memory)
         reward_memory = np.array(self.reward_memory)
-        
-        actions = np.zeros([len(action_memory), self.n_actions])
-        actions[np.arange(len(action_memory)), action_memory[:-1]]=1
         
         G = np.zeros_like(reward_memory)
         for t in range(len(reward_memory)):
@@ -97,7 +94,7 @@ class Agent(object):
         std = np.std(G) if np.std(G) > 0 else 1
         self.G = (G-mean)/std
         
-        cost = self.policy.train_on_batch([state_memory ,self.G], actions)
+        cost = self.policy.train_on_batch([state_memory ,self.G], action_memory)
         
         self.state_memory = []
         self.action_memory = []
@@ -110,6 +107,3 @@ class Agent(object):
         
     def load_model(self):
         self.policy = load_model(self.model_file)
-        
-    
-        

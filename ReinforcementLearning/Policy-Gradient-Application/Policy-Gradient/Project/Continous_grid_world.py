@@ -7,15 +7,15 @@ Created on Mon Jun 29 00:53:59 2020
 import numpy as np
 
 class CGridWorld(object):
-    def __init__(self,size, p, prefAction):       
-            self.prefAction = prefAction
-            self.prefActionSpace = {'U':1, 'D':2, 'L':3, 'R':4}
+    def __init__(self,size, p):       
+            
             self.actionSpace = {'U':1, 'D':2, 'L':3, 'R':4}
             self.possibleActions = ['U', 'D', 'L', 'R']
             
             self.size = size
             self.p = p
             
+            self.prefAction = self.setPrefAction()
             self.firstState = self.generate_random_map(size=5, p = self.p)
             
     def onTree(self, state, action, row=None, col=None):
@@ -36,14 +36,21 @@ class CGridWorld(object):
             col = -1
         
         agentLoc = state[row][col]
-        
         #if location matches tree 
         if agentLoc.all() == 0:
             return True
         
         return False
     
-    
+    def setPrefAction(self, prefAction = None):
+        if prefAction is None:
+            prefAction = np.random.choice(['U', 'D', 'L', 'R'])
+        self.prefAction = prefAction
+        
+    def getPrefAction(self):
+        return self.prefAction
+            
+        
     # DFS to check that it's a valid path.
     def is_valid(self, res, rsize, csize):
         #tracks a list of nodes from from (0,0) to end of graph goal
@@ -124,8 +131,12 @@ class CGridWorld(object):
         """
         if p is None:
             p = self.p
-            
-            
+        
+        
+        genRow = None
+        direction = None
+        rowCol = None
+        
         valid = False
         
         #loops until valid genration
@@ -154,7 +165,7 @@ class CGridWorld(object):
             if genRow == 1:
                 rowSize = 2
                 colSize = self.size
-            else:
+            elif genRow == 0:
                 rowSize = self.size
                 colSize = 2
             
@@ -162,34 +173,30 @@ class CGridWorld(object):
             newState= np.delete(state, direction, rowCol)
             
             #repositions agent X to center space
-            if not self.onTree(newState, action):
-                if action == 'U':
-                    temp = newState[0][1]
-                    newState[0][1] = newState[1][1]
-                    newState[1][1] = temp
-    
-                elif action == 'D':
-                    temp = newState[1][1]
-                    newState[1][1] = newState[0][1]
-                    newState[0][1] = temp
-    
-                elif action == 'R':
-                    temp = newState[1][1]
-                    newState[1][1] = newState[1][0]
-                    newState[1][0] = temp
-    
-                elif action == 'L':
-                    temp = newState[1][0]
-                    newState[1][0] = newState[1][1]
-                    newState[1][1] = temp
-            else:
-                return None
+            if action == 'U':
+                temp = newState[0][1]
+                newState[0][1] = newState[1][1]
+                newState[1][1] = temp
+
+            elif action == 'D':
+                temp = newState[1][1]
+                newState[1][1] = newState[0][1]
+                newState[0][1] = temp
+
+            elif action == 'R':
+                temp = newState[1][1]
+                newState[1][1] = newState[1][0]
+                newState[1][0] = temp
+
+            elif action == 'L':
+                temp = newState[1][0]
+                newState[1][0] = newState[1][1]
+                newState[1][1] = temp
                 
             
-            #generates new statespace and obstical poulation based off pprobability
+            #generates new space or obstical poulation based off probability p
             p = min(1, p)
             newRCArr = np.random.choice([1, 0], (rowSize, colSize), p=[p, 1-p])
-            #newRCStr = ["".join(x) for x in newRCArr]
         
             
             #adds new space and sets furthest row/col as goal for path validation DFS
@@ -230,7 +237,6 @@ class CGridWorld(object):
             newState = np.delete(newState, -1, 1)       
             
             
-        #return ["".join(x) for x in newState]
         return newState
     
     
@@ -247,33 +253,34 @@ class CGridWorld(object):
     
         if not done:
             
-            resultingState = self.stateUpdate(self.setState(), size=3, action = action, p=0.6)
+            resultingState = self.stateUpdate(  self.setState(), size=3, action = action, p=0.6)
             
-            reward += 15
+           
             
-            if resultingState == None:
-                reward += -10
+            reward += 10
               
             #prefred action function
-            if self.actionSpace[action] == self.prefActionSpace[self.prefAction]:
-                reward += 1
+            if action == self.prefAction:
+                reward += -1
             else:
-                reward += 1
+                reward += -3
             
-            self.setState(resultingState, action)
+            self.setState(resultingState)
+            
             return resultingState, reward, \
                    done, None
                    
         else:
+            reward += -50
             
-            if resultingState == None:
-                reward += -100
+            resultingState = self.stateUpdate(  self.setState(), size=3, action = action, p=0.6)
             
             return resultingState, reward, \
                    done, None
         
 
     def reset(self):
+        self.setPrefAction()
         return self.setState(self.generate_random_map(self.size + 2, self.p))
     
     
@@ -289,8 +296,5 @@ class CGridWorld(object):
                     print('o', end='\t')
             print('\n')
         print('------------------------------------------')
-
-
-        
         
         
