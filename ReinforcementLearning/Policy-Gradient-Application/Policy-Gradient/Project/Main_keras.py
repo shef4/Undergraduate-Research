@@ -22,7 +22,7 @@ if __name__ == '__main__':
     prefActionEp = []
     
     #print observation
-    n_episodes = 2000
+    n_episodes =500
    
     for i in range(n_episodes):
         done=False
