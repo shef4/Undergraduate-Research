@@ -11,7 +11,7 @@ import keras.backend as K
 import numpy as np
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import LabelEncoder
-
+#10000
 class Agent(object):
     def __init__(self, ALPHA, GAMMA=0.99,n_actions=4,
                  layer1_size=16, layer2_size=16, input_dims=128,
@@ -29,16 +29,17 @@ class Agent(object):
         self.reward_memory = []
         
         self.policy, self.predict = self.build_policy_network()
-        self.action_space = [1, 2, 3, 4]
+        self.action_space = [0, 1, 2, 3]
         self.model_file = fname
         
     def build_policy_network(self):
-        
-        env2d = Input(shape=(self.input_dims,self.input_dims))
-        env = Flatten()(env2d)
+        #change to single (test)
+        env2d = Input(shape=(self.input_dims))
+        #env = Flatten()(env2d)
         
         advantages = Input(shape=[1])
-        
+        #google search keras input layer - keras api refernce - scroll to find term (eg. shape)
+        #fc1_
         dense1 = Dense(self.fc1_dims, activation='relu')(env)
         dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
         probs = Dense(self.n_actions, activation='softmax')(dense2)

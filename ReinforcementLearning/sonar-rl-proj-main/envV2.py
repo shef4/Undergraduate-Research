@@ -259,7 +259,7 @@ class sonarEnv(core.Env):
         #This moves the trees and makes a new row if the ronde has moved forward enough
         self.checkTreeRow()
         
-        return np.array(self.state), reward, self.done, {}
+        return np.append(np.array(self.state), self.heading,axis=None), reward, self.done, {}
         
     def reset(self):
         #Reset the environment
@@ -337,13 +337,13 @@ class sonarEnv(core.Env):
         plt.plot(self.pos[0]+self.heading[0],self.pos[1]+self.heading[1],'r.')
         plt.xlim([self.pos[0]-10,self.pos[0]+10])
         plt.ylim([self.pos[1]-6,self.pos[1]+6])
-        plt.savefig('outputs/states/'+str(self.dronesize)+'_'+str(i)+'.eps',transparent=True)
-        # plt.show()
+        plt.savefig('outputs/states/'+str(self.dronesize)+'_step_'+str(i)+'.png',transparent=False)
+        plt.show()
         plt.close()
         
         plt.plot(self.state)
-        plt.savefig('outputs/obs/'+str(self.dronesize)+'_'+str(i)+'_observedIR.eps',transparent=True)
-        # plt.show()
+        plt.savefig('outputs/obs/'+str(self.dronesize)+'_step_'+str(i)+'_observedIR.png',transparent=False)
+        plt.show()
         plt.close()
         
     

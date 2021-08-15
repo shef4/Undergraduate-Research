@@ -2,26 +2,77 @@
 
 # Import the environment
 import envV2 as ENV
+#Import agent + policy model : Reinforce
+from Reinforce_keras import Agent
+# other dependencies
+import matplotlib.pyplot as plt
+import numpy as np
 
 #Load the environment, it has a number of variables that can be initailized.
 #Here we just set the movement speed of the drone and drone size radius.
 env = ENV.sonarEnv(speed=0.5,dronesize=0.1)
 
-# This loop just moves forward for 100 steps, if the drone crashes we reset.
-for i in range(100):
-    
-    # Step function has the action as input: 0 - forward, 1 - backwards, 2 - turn left, 3 - turn right
-    # It returns a vector of the state, the reward, the `finished' boolean
-    a = env.step(0)
-    
-    # Render will plot the state as a curve, and also plots a top down plot of the trees
-    env.render(i)
-    
-    # If `finished' we reset
-    if a[2]:
-        env.reset()
-    
+agent = Agent(ALPHA=0.0005, input_dims=10003, GAMMA=0.99,n_actions=4,
+             layer1_size=64, layer2_size=64)
 
+score_history = []
+steps_history = []
+stepDirct_history = [0,0,0,0]
+
+#print observation
+n_episodes = 1000
+   
+for i in range(n_episodes):
+    done=False
+    score = 0
+    steps=0
+    observation = env.reset()
+    #env.setPrefAction()
+    #prefActionEp.append(env.getPrefAction)
+    
+    while not done and steps < 500:
+        #input: get G for profomance - array len episode save G zero
+        action = agent.choose_action(observation)
+        
+        #next steps: 
+        # - Reward shaping and obstical avoidance
+        # - model shaping based off input shape (Fourier series of tree echo's) 
+        #   might filter input audio to make differences stand out 
+        #   Qu: what differece are there in audio coming from 
+        #       the front vs the back vs the sides?
+        # - Qu: What range of directions does the echo inout come from?
+        stepDirct_history[action] += 1
+            
+        #TODO: 
+        # add heading 
+        observation_, reward, done, info = env.step(action)
+        agent.store_transition(observation, action, reward)
+        observation = observation_
+        score += reward
+        steps += 1
+        # Render will plot the state as a curve, and also plots a top down plot of the trees
+        env.render(steps)
+        
+    #stores the values of step for graphing
+    score_history.append(score)
+    steps_history.append(steps)
+    
+   
+    
+    agent.learn()
+    
+    print('episode: ', i, 'score %.1f:' % score,'steps %.1f:' % (steps-1),
+          'average_score %.1f:' % np.mean(score_history[-100:]))
+agent.save_model()
+
+plt.plot(score_history[:25:])
+#plt.plot(steps_history[:25:])
+plt.plot(stepDirct_history[:])
+#fig = plt.figure()
+#ax = fig.add_axes([0,0,1,1])
+#act = [0,1,2,3]
+#ax.bar(act, stepDirct_history[0:4])
+plt.show()
 # Frees some memory when finished with the environment
 env.close()
 """
