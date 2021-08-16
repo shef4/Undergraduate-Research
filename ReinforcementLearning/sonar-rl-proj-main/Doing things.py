@@ -10,9 +10,9 @@ import numpy as np
 
 #Load the environment, it has a number of variables that can be initailized.
 #Here we just set the movement speed of the drone and drone size radius.
-env = ENV.sonarEnv(speed=0.5,dronesize=0.1)
+env = ENV.sonarEnv(rotationAngle=90,speed=1,sepDist=3,dronesize=0.1)
 
-agent = Agent(ALPHA=0.0005, input_dims=10003, GAMMA=0.99,n_actions=4,
+agent = Agent(ALPHA=0.0005, input_dims=10000, GAMMA=0.99,n_actions=4,
              layer1_size=64, layer2_size=64)
 
 score_history = []
@@ -27,10 +27,11 @@ for i in range(n_episodes):
     score = 0
     steps=0
     observation = env.reset()
+    strAction = ''
     #env.setPrefAction()
     #prefActionEp.append(env.getPrefAction)
     
-    while not done and steps < 500:
+    while not done and steps < 10 :
         #input: get G for profomance - array len episode save G zero
         action = agent.choose_action(observation)
         
@@ -42,6 +43,14 @@ for i in range(n_episodes):
         #       the front vs the back vs the sides?
         # - Qu: What range of directions does the echo inout come from?
         stepDirct_history[action] += 1
+        if action == 0:
+            strAction = 'U'
+        elif action == 1:
+            strAction = 'D'
+        elif action == 2:
+            strAction = 'L'
+        elif action == 3:
+            strAction = 'R'
             
         #TODO: 
         # add heading 
@@ -50,19 +59,17 @@ for i in range(n_episodes):
         observation = observation_
         score += reward
         steps += 1
-        # Render will plot the state as a curve, and also plots a top down plot of the trees
-        env.render(steps)
         
+        # Render will plot the state as a curve, and also plots a top down plot of the trees
+        #env.render(steps)
+        print('action: ', strAction, 'score %.1f: ' % score,'steps %.1f: ' % (steps-1))
     #stores the values of step for graphing
     score_history.append(score)
     steps_history.append(steps)
-    
-   
-    
     agent.learn()
     
-    print('episode: ', i, 'score %.1f:' % score,'steps %.1f:' % (steps-1),
-          'average_score %.1f:' % np.mean(score_history[-100:]))
+    print('episode: ', i, 'score %.1f:' % score,'steps %.1f:' % (steps-1),'average_score %.1f:' % np.mean(score_history[-100:]))
+    
 agent.save_model()
 
 plt.plot(score_history[:25:])

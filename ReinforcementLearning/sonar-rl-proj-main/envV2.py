@@ -226,12 +226,19 @@ class sonarEnv(core.Env):
         #If we reach 10000 time steps reset
         if self.t>10000:
             self.done=True
-            
+        
+        # forward -> 1 | left,right -> 0 | backwards -> -1
+        dirRew_dict = {
+            #direction(90deg) : reward
+            1 : 0.8,
+            0 : -0.5,
+            -1: -1  
+            }
             
         if action == 0:
             #Forward
             self.pos= self.pos + self.heading*self.speed
-            reward = self.heading[1]*self.speed
+            reward = dirRew_dict[self.heading[1]]*self.speed
             if self.checkCollisions():
                 self.done=True
             self.state = self.getIR()
@@ -239,7 +246,7 @@ class sonarEnv(core.Env):
         elif action == 1:
             #Back
             self.pos=self.pos-self.heading*self.speed
-            reward = -self.heading[1]*self.speed
+            reward = dirRew_dict[self.heading[1]]*self.speed
             if self.checkCollisions():
                 self.done=True
             self.state = self.getIR()
@@ -259,7 +266,8 @@ class sonarEnv(core.Env):
         #This moves the trees and makes a new row if the ronde has moved forward enough
         self.checkTreeRow()
         
-        return np.append(np.array(self.state), self.heading,axis=None), reward, self.done, {}
+        #return np.append(np.array(self.state), self.heading,axis=None), reward, self.done, {}
+        return np.array(self.state), reward, self.done, {}
         
     def reset(self):
         #Reset the environment

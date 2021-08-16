@@ -42,7 +42,9 @@ class Agent(object):
         
         dense1 = Dense(self.fc1_dims, activation='relu')(env)
         dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
-        probs = Dense(self.n_actions, activation='softmax')(dense2)
+        dense3 = Dense(self.fc2_dims, activation='relu')(dense2)
+        dense4 = Dense(self.fc2_dims, activation='relu')(dense3)
+        probs = Dense(self.n_actions, activation='softmax')(dense4)
        
         
         def custom_loss(y_true, y_pred):
@@ -62,6 +64,10 @@ class Agent(object):
     
     def choose_action(self, observation):
         state = observation[np.newaxis, :]
+        
+        #norm = np.linalg.norm(state)
+        #norm_state = state/norm
+        
         probabilities = self.predict.predict(state)[0]
         action = np.random.choice(self.action_space, p=probabilities)
         
