@@ -230,33 +230,40 @@ class sonarEnv(core.Env):
         # forward -> 1 | left,right -> 0 | backwards -> -1
         dirRew_dict = {
             #direction(90deg) : reward
-            1 : 0.8,
-            0 : -0.5,
-            -1: -1  
+            1 : 2,
+            0 : -1,
+            -1: -2 
             }
-            
+        
+        def update_reward():
+            if int(self.heading[1]) == 0:
+                reward = dirRew_dict[int(self.heading[1])]*self.speed
+            else:
+                if action == 0:
+                    reward = dirRew_dict[int(self.heading[1])]*self.speed
+                else:
+                    reward = -dirRew_dict[int(self.heading[1])]*self.speed
+            if self.checkCollisions():
+                self.done=True
+                reward -= 5
+            return reward
+                
         if action == 0:
             #Forward
             self.pos= self.pos + self.heading*self.speed
-            reward = dirRew_dict[self.heading[1]]*self.speed
-            if self.checkCollisions():
-                self.done=True
+            reward = update_reward()
             self.state = self.getIR()
         
         elif action == 1:
             #Back
             self.pos=self.pos-self.heading*self.speed
-            reward = dirRew_dict[self.heading[1]]*self.speed
-            if self.checkCollisions():
-                self.done=True
+            reward = update_reward()
             self.state = self.getIR()
-            
         elif action == 2:
             #Left
             self.heading = np.matmul(self.r_left,self.heading)
             reward = 0
             self.state = self.getIR()
-            
         elif action == 3:
             #Right
             self.heading = np.matmul(self.r_right,self.heading)
