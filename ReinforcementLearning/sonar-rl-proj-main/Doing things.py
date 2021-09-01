@@ -7,16 +7,18 @@ from Reinforce_keras import Agent
 # other dependencies
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+import matplotlib.patches as mpatches
 import numpy as np
 
 #Load the environment, it has a number of variables that can be initailized.
 #Here we just set the movement speed of the drone and drone size radius.
-env = ENV.sonarEnv(rotationAngle=90,speed=1,sepDist=5,dronesize=2)
-
-agent = Agent(ALPHA=0.0005, input_dims=10000, GAMMA=0.99,n_actions=4,
-             layer1_size=64, layer2_size=64)
+env = ENV.sonarEnv(rotationAngle=90,speed=1,sepDist=10 ,dronesize=2)
+agent = Agent(ALPHA=0.005, input_dims=10000, GAMMA=0.3,n_actions=4,
+             layer1_size=64, layer2_size=64, fname="models/reinforce_forward_policy.h5")
 
 score_history = []
+avg_score_history = []
 steps_history = []
 stepDirct_history = [0,0,0,0]
 action_Dict = {
@@ -27,32 +29,8 @@ action_Dict = {
 }
 
 #print observation
-n_episodes = 10000
-
-def ep_graph(steps_arr,score_arr,action_arr):
-    # Function to map the colors as a list from the input list of x variables
-    def pltcolor(lst):
-        cols=[]
-        for l in lst:
-            if l=='U':
-                cols.append(0)
-            elif l=='L':
-                cols.append(1)
-            elif l=='R':
-                cols.append(2)
-            else:
-                cols.append(3)
-        return cols
-
-    colors = ["green", "blue", "pink", "red"]
-    colormap = matplotlib.colors.ListedColormap(colors)
-    color_indices = pltcolor(action_arr)
-
-    fig, ax = plt.subplots()
-    ax.plot(steps_arr, score_arr,'--', color='black')
-    ax.scatter(steps_arr, score_arr, c=color_indices, cmap=colormap)
-    plt.show()
-   
+n_episodes = 3000
+#agent.load_model() 
 for i in range(n_episodes):
     done=False
     score = 0
@@ -65,7 +43,7 @@ for i in range(n_episodes):
     score_arr = [0]
     action_arr = ['U']
     
-    while not done and steps < 10 :
+    while not done and steps < 20:
         #input: get G for profomance - array len episode save G zero
         action = agent.choose_action(observation)
         
@@ -89,17 +67,21 @@ for i in range(n_episodes):
         score_arr.append(score)
         action_arr.append(action_Dict[action])
         
+        
         # Render will plot the state as a curve, and also plots a top down plot of the trees
-        #env.render(steps)
-        print('action:  %-6s ' % action_Dict[action], 'score: %6.1f ' % score,'steps: %6.1f ' % (steps-1))
+        env.render(steps)
+        #print('action:  %-6s ' % action_Dict[action], 'score: %6.1f ' % score,'steps: %6.1f ' % (steps-1))
     #stores the values of step for graphing
     score_history.append(score)
     steps_history.append(steps)
     agent.learn()
-    ep_graph(steps_arr,score_arr,action_arr)
+    ep_graph(steps_arr,score_arr,action_arr,i)
     print('ep: %6.1d' % i, ' score : %6.1f' % score,' steps : %-6.1f' % (steps-1),'average_score : %6.1f' % np.mean(score_history[-100:]))
-    
-agent.save_model()
+    avg_score_history.append(np.mean(score_history[-100:]))
+    if (i%500 == 0):
+        agent.save_model()
+
+
 
 plt.plot(score_history[:25:])
 #plt.plot(steps_history[:25:])
@@ -111,59 +93,40 @@ plt.plot(stepDirct_history[:])
 plt.show()
 # Frees some memory when finished with the environment
 env.close()
-"""
-env = CGridWorld(size = 3, p = 0.5)
-    
-    agent = Agent(ALPHA=0.0005, input_dims=3, GAMMA=0.99,n_actions=4,
-                  layer1_size=64, layer2_size=64)
 
-    score_history = []
-    prefActionEp = []
+def ep_graph(steps_arr,score_arr,action_arr,ep):
+    # Function to map the colors as a list from the input list of x variables
+    def pltcolor(lst):
+        cols=[]
+        for l in lst:
+            if l=='U':
+                cols.append(0)
+            elif l=='L':
+                cols.append(1)
+            elif l=='R':
+                cols.append(2)
+            else:
+                cols.append(3)
+        return cols
+
+    colors = ["green", "blue", "cyan", "red"]
+    colormap = matplotlib.colors.ListedColormap(colors)
+    color_indices = pltcolor(action_arr)
+
+    fig, ax = plt.subplots()
+    ax.plot(steps_arr, score_arr,'--', color='black')
+    ax.scatter(steps_arr, score_arr, c=color_indices, cmap=colormap)
+    plt.title('Agent Score Vs Action Steps '+str(ep), fontsize=14)
+    plt.xlabel('Num. Steps', fontsize=14)
+    plt.ylabel('Agent Score', fontsize=14)
     
-    #print observation
-    n_episodes =500
-   
-    for i in range(n_episodes):
-        done=False
-        score = 0
-        steps=0
-        observation = env.reset()
-        env.setPrefAction()
-        prefActionEp.append(env.getPrefAction)
-        
-        while not done and steps < 1000:
-            #not done
-            action = agent.choose_action(observation)
-            
-            
-            if action == 1:
-                strAction = 'U'
-            elif action == 2:
-                strAction = 'D'
-            elif action == 3:
-                strAction = 'L'
-            elif action == 4:
-                strAction = 'R'
-            
-            observation_, reward, done, info = env.step(strAction)
-            agent.store_transition(observation, action, reward)
-            observation = observation_
-            score += reward
-            steps += 1
-            
-        
-        score_history.append(score)
-        
-        agent.learn()
-        
-        print('episode: ', i, 'prefered Action:', env.getPrefAction(),'score %.1f:' % score,'steps %.1f:' % (steps-1),
-              'average_score %.1f:' % np.mean(score_history[-100:]))
-    agent.save_model()
+    gre_patch = mpatches.Patch(color='green', label='Forward')
+    red_patch = mpatches.Patch(color='red', label='Back')
+    pin_patch = mpatches.Patch(color='cyan', label='Turn Right')
+    blu_patch = mpatches.Patch(color='blue', label='Turn Left')
     
-    plt.plot(score_history[:10:])
-    
-    
-    plt.plot(steps[:10:])
+    plt.legend(handles=[gre_patch, red_patch, blu_patch, pin_patch])
+    plt.grid(True)
+    plt.savefig('outputs/ep_graph/ep_0_rot'+str(ep)+'.png',transparent=False)
     plt.show()
-
-"""
+    plt.close()

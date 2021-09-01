@@ -30,10 +30,9 @@ class Agent(object):
         
         self.policy, self.predict = self.build_policy_network()
         self.action_space = [0, 1, 2, 3]
-        self.model_file = fname
+        self.model_file = str(fname)
         
     def build_policy_network(self):
-        
         #env2d = Input(shape=(self.input_dims,self.input_dims))
         env1d = Input(shape=(self.input_dims))
         env = Flatten()(env1d)
@@ -47,16 +46,14 @@ class Agent(object):
         probs = Dense(self.n_actions, activation='softmax')(dense4)
        
         
-        def custom_loss(y_true, y_pred):
+        def custom_loss(y_pred, y_true):
             out = K.clip(y_pred, 1e-8,  1-1e-8)
             log_lik = y_true*K.log(out)
             
             return K.sum(-log_lik*advantages)
         
-        
         policy = Model(inputs=[env1d,advantages], outputs=[probs])
         policy.compile(optimizer=Adam(lr=self.lr), loss=custom_loss)
-        
         
         self.predict = Model(inputs=[env1d], outputs=[probs])
         
@@ -113,4 +110,10 @@ class Agent(object):
         self.policy.save(self.model_file)
         
     def load_model(self):
-        self.policy = load_model(self.model_file)
+        advantages = Input(shape=[1])
+        def custom_loss(y_pred, y_true):
+            out = K.clip(y_pred, 1e-8,  1-1e-8)
+            log_lik = y_true*K.log(out)
+            return K.sum(-log_lik*advantages)
+        
+        self.policy = load_model(self.model_file, custom_objects={'custom_loss': custom_loss})

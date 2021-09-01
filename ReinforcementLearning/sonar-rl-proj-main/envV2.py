@@ -60,7 +60,6 @@ class Tree:
     
     def shift(self,pos):
         #Function to move the tree
-        
         self.LeafPos = self.LeafPos + pos
         self.maxx = self.LeafPos[:,0].max()
         self.minx = self.LeafPos[:,0].min()
@@ -230,9 +229,9 @@ class sonarEnv(core.Env):
         # forward -> 1 | left,right -> 0 | backwards -> -1
         dirRew_dict = {
             #direction(90deg) : reward
-            1 : 2,
-            0 : -1,
-            -1: -2 
+            1 : 1,
+            0 : 0,
+            -1: -1 
             }
         
         def update_reward():
@@ -246,6 +245,7 @@ class sonarEnv(core.Env):
             if self.checkCollisions():
                 self.done=True
                 reward -= 5
+                
             return reward
                 
         if action == 0:
@@ -311,13 +311,13 @@ class sonarEnv(core.Env):
             lg = t.LeafPos[idx]
             idx1 = np.where(Distances > 4.3)
             lr = t.LeafPos[idx1]
-            plt.plot(lr[:,0],lr[:,1],'r.')
-            plt.plot(lg[:,0],lg[:,1],'g.')
+            plt.plot(lr[:,0],lr[:,1],'g.')
+            plt.plot(lg[:,0],lg[:,1],'r.')
             
             if self.checkTreeDist(t):
-                plt.plot(t.center[0],t.center[1],'g*')
+                plt.plot(t.center[0],t.center[1],'k*')
             else:
-                plt.plot(t.center[0],t.center[1],'r*')
+                plt.plot(t.center[0],t.center[1],'k*')
             # circle1 = plt.Circle(t.center,t.radius,color='g',fill=False)
             # plt.gcf().gca().add_artist(circle1)
             
@@ -335,30 +335,30 @@ class sonarEnv(core.Env):
             DroneToLeaf = t.LeafPos-self.pos
             Distances = np.linalg.norm(DroneToLeaf,axis=1)
             idx = np.where(Distances < 4.3)
-            lg = t.LeafPos[idx]
+            lr = t.LeafPos[idx]
             idx1 = np.where(Distances > 4.3)
-            lr = t.LeafPos[idx1]
-            plt.plot(lr[:,0],lr[:,1],'r.')
+            lg = t.LeafPos[idx1]
             plt.plot(lg[:,0],lg[:,1],'g.')
+            plt.plot(lr[:,0],lr[:,1],'r.')
             
             if self.checkTreeDist(t):
-                plt.plot(t.center[0],t.center[1],'g*')
+                plt.plot(t.center[0],t.center[1],'k*')
             else:
-                plt.plot(t.center[0],t.center[1],'r*')
+                plt.plot(t.center[0],t.center[1],'k*')
             # circle1 = plt.Circle(t.center,t.radius,color='g',fill=False)
             # plt.gcf().gca().add_artist(circle1)
             
-        plt.plot(self.pos[0],self.pos[1],'r*')
-        plt.plot(self.pos[0]+self.heading[0],self.pos[1]+self.heading[1],'r.')
+        plt.plot(self.pos[0],self.pos[1],'b*')
+        plt.plot(self.pos[0]+self.heading[0],self.pos[1]+self.heading[1],'b.')
         plt.xlim([self.pos[0]-10,self.pos[0]+10])
         plt.ylim([self.pos[1]-6,self.pos[1]+6])
         plt.savefig('outputs/states/'+str(self.dronesize)+'_step_'+str(i)+'.png',transparent=False)
-        plt.show()
+        #plt.show()
         plt.close()
         
         plt.plot(self.state)
         plt.savefig('outputs/obs/'+str(self.dronesize)+'_step_'+str(i)+'_observedIR.png',transparent=False)
-        plt.show()
+        #plt.show()
         plt.close()
         
     
@@ -385,7 +385,7 @@ class sonarEnv(core.Env):
         plt.tick_params(axis='both', which='both', bottom=False, top=False, labelbottom=False, right=False, left=False, labelleft=False)
         
         plt.savefig('outputs/states/'+str(self.dronesize)+'_'+str(i)+'.eps',transparent=True)
-        # plt.show()
+        plt.show()
         plt.cla() 
         plt.clf()
         plt.close('all')
@@ -427,7 +427,7 @@ class sonarEnv(core.Env):
         plt.tick_params(axis='both', which='both', bottom=False, top=False, labelbottom=False, right=False, left=False, labelleft=False)
         
         plt.savefig('outputs/states/'+str(self.dronesize)+'_'+str(i)+'.eps',transparent=True)
-        # plt.show()
+        plt.show()
         plt.cla() 
         plt.clf()
         plt.close('all')
