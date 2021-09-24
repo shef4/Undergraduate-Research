@@ -18,7 +18,7 @@ def get_formats():
 
 
 def convert_seq_to_mov():
-    input = r"C:\Users\sefun\Dev\Undergraduate-Research-master\ReinforcementLearning\sonar-rl-proj-main\outputs\states\0.1_step_-%d.png"
+    input = r"C:\Users\sefun\Dev\Undergraduate-Research-master\ReinforcementLearning\sonar-rl-proj-main\outputs\states\Episode_1500_Step_22_drone-size_2.png-%d.png"
     output = r"C:\Users\sefun\Dev\Undergraduate-Research-master\ReinforcementLearning\sonar-rl-proj-main\outputs\vid\0.1_ep.mp4"
     frame_rate = 24
     cmd = f'ffmpeg -framerate {frame_rate} -i "{input}" "{output}"'

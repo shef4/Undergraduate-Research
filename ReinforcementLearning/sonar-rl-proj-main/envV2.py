@@ -235,17 +235,17 @@ class sonarEnv(core.Env):
             }
         
         def update_reward():
-            if int(self.heading[1]) == 0:
+            reward = 0
+            if self.checkCollisions():
+                self.done=True
+                reward -= 2
+            elif int(self.heading[1]) == 0:
                 reward = dirRew_dict[int(self.heading[1])]*self.speed
             else:
                 if action == 0:
                     reward = dirRew_dict[int(self.heading[1])]*self.speed
                 else:
                     reward = -dirRew_dict[int(self.heading[1])]*self.speed
-            if self.checkCollisions():
-                self.done=True
-                reward -= 5
-                
             return reward
                 
         if action == 0:
@@ -260,21 +260,21 @@ class sonarEnv(core.Env):
             reward = update_reward()
             self.state = self.getIR()
         elif action == 2:
-            #Left
+            #turn Left
             self.heading = np.matmul(self.r_left,self.heading)
-            reward = 0
+            reward = int(self.heading[1])*0.25 - 0.25
             self.state = self.getIR()
         elif action == 3:
-            #Right
+            #turn Right
             self.heading = np.matmul(self.r_right,self.heading)
-            reward = 0
+            reward = int(self.heading[1])*0.25 - 0.25
             self.state = self.getIR()
         
         #This moves the trees and makes a new row if the ronde has moved forward enough
         self.checkTreeRow()
         
-        #return np.append(np.array(self.state), self.heading,axis=None), reward, self.done, {}
-        return np.array(self.state), reward, self.done, {}
+        return np.array(self.state), np.array(self.heading), reward, self.done, {}
+        #return np.array(self.state), reward, self.done, {}
         
     def reset(self):
         #Reset the environment
@@ -291,11 +291,26 @@ class sonarEnv(core.Env):
         # gc.collect()
         # self.gan = ARGANmodel.ARGAN()
         # self.gan.load_weights(self.ganWeights)
-        return self.state
+        return self.state, self.heading
         
     #The render functions all generate images, they have different properties and were ad hoc added as needed. Technically not necessary 
-    
-    def render(self,i):
+    def plot_results(self, avg_score_history, filename):
+        fig, ax = plt.subplots()
+        ax.plot(steps_arr, score_arr,'--', color='black')
+        ax.scatter(steps_arr, score_arr, c=color_indices, cmap=colormap)
+        
+        
+        plt.plot(avg_score_history)
+        plt.title('Results '+filename, fontsize=14)
+        plt.xlabel('Num. Episodes', fontsize=14)
+        plt.ylabel('Avg. Score', fontsize=14)
+        plt.grid(True)
+        plt.savefig('outputs/ep_graph/'+filename+'_result.png',transparent=False)
+        plt.show()
+        plt.close()
+        
+    def render(self,i,episode,reward):
+        figure, axis = plt.subplots(2, 1)
         for t in self.TreeRow1:
             # print("Tree at Pos:%"+str(t.pos))
             # print(t.center)
@@ -311,13 +326,13 @@ class sonarEnv(core.Env):
             lg = t.LeafPos[idx]
             idx1 = np.where(Distances > 4.3)
             lr = t.LeafPos[idx1]
-            plt.plot(lr[:,0],lr[:,1],'g.')
-            plt.plot(lg[:,0],lg[:,1],'r.')
+            axis[0].plot(lr[:,0],lr[:,1],'g.')
+            axis[0].plot(lg[:,0],lg[:,1],'r.')
             
             if self.checkTreeDist(t):
-                plt.plot(t.center[0],t.center[1],'k*')
+                axis[0].plot(t.center[0],t.center[1],'k*')
             else:
-                plt.plot(t.center[0],t.center[1],'k*')
+                axis[0].plot(t.center[0],t.center[1],'k*')
             # circle1 = plt.Circle(t.center,t.radius,color='g',fill=False)
             # plt.gcf().gca().add_artist(circle1)
             
@@ -338,29 +353,39 @@ class sonarEnv(core.Env):
             lr = t.LeafPos[idx]
             idx1 = np.where(Distances > 4.3)
             lg = t.LeafPos[idx1]
-            plt.plot(lg[:,0],lg[:,1],'g.')
-            plt.plot(lr[:,0],lr[:,1],'r.')
+            axis[0].plot(lg[:,0],lg[:,1],'g.')
+            axis[0].plot(lr[:,0],lr[:,1],'r.')
             
             if self.checkTreeDist(t):
-                plt.plot(t.center[0],t.center[1],'k*')
+                axis[0].plot(t.center[0],t.center[1],'k*')
             else:
-                plt.plot(t.center[0],t.center[1],'k*')
+                axis[0].plot(t.center[0],t.center[1],'k*')
             # circle1 = plt.Circle(t.center,t.radius,color='g',fill=False)
             # plt.gcf().gca().add_artist(circle1)
             
-        plt.plot(self.pos[0],self.pos[1],'b*')
-        plt.plot(self.pos[0]+self.heading[0],self.pos[1]+self.heading[1],'b.')
-        plt.xlim([self.pos[0]-10,self.pos[0]+10])
-        plt.ylim([self.pos[1]-6,self.pos[1]+6])
-        plt.savefig('outputs/states/'+str(self.dronesize)+'_step_'+str(i)+'.png',transparent=False)
-        #plt.show()
+        # North -> 1 |East/West -> 0 | South -> -1
+        compass_dict = {
+            #direction(90deg) : reward
+            1 : 'N',
+            0 : 'W/E',
+            -1: 'S'
+            }
+        
+        # For Simulated Enviroment
+        axis[0].plot(self.pos[0],self.pos[1],'b*', markersize=(self.dronesize*1))
+        axis[0].plot(self.pos[0]+self.heading[0],self.pos[1]+self.heading[1],'b.', markersize=(self.dronesize*1 ))
+        axis[0].axis(xmin=self.pos[0]-10,xmax=self.pos[0]+10)
+        axis[0].axis(ymin=self.pos[1]-6,ymax=self.pos[1]+6)
+        axis[0].set_title("Simulated Env. & Agent Obs: Ep-"+str(episode)+" Step-"+str(i) +" Dir-"+str(compass_dict[int(self.heading[1])])+" Rew-"+str(reward))
+        # For Cosine Function
+        axis[1].plot(self.state)
+        plt.savefig('outputs/states/Episode_'+str(episode)+"_Step_"+str(i)+"_drone-size_"+str(self.dronesize)+'.png',transparent=False)
         plt.close()
         
-        plt.plot(self.state)
-        plt.savefig('outputs/obs/'+str(self.dronesize)+'_step_'+str(i)+'_observedIR.png',transparent=False)
+        #plt.plot(self.state)
+        #plt.savefig('outputs/obs/'+str(self.dronesize)+'_step_'+str(i)+'_observedIR.png',transparent=False)
         #plt.show()
-        plt.close()
-        
+        #plt.close()
     
     def render_for_nips(self,i):
         for t in self.TreeRow1:
