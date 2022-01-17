@@ -17,10 +17,14 @@ import keras.backend
 import objgraph
 
 a = 1
+#TASK:
+# scale oupputstate
+# drone 30cm x 30cm x 30cm
+# tree gaps 60cm
+# orientation - heading
 
 # The tree class, the main building block in the environment.
 # It loads an array of leaf positions and normals, and can generate an impulse response.
-
 class Tree:
     def __init__(self,pos,variety,theta):
         
@@ -238,14 +242,14 @@ class sonarEnv(core.Env):
             reward = 0
             if self.checkCollisions():
                 self.done=True
-                reward -= 2
-            elif int(self.heading[1]) == 0:
-                reward = dirRew_dict[int(self.heading[1])]*self.speed
+                reward -= 3
+            elif round(self.heading[1]) == 0:
+                reward = dirRew_dict[round(self.heading[1])]*self.speed
             else:
                 if action == 0:
-                    reward = dirRew_dict[int(self.heading[1])]*self.speed
-                else:
-                    reward = -dirRew_dict[int(self.heading[1])]*self.speed
+                    reward = dirRew_dict[round(self.heading[1])]*self.speed
+                elif action == 1:
+                    reward = -dirRew_dict[round(self.heading[1])]*self.speed
             return reward
                 
         if action == 0:
@@ -262,18 +266,18 @@ class sonarEnv(core.Env):
         elif action == 2:
             #turn Left
             self.heading = np.matmul(self.r_left,self.heading)
-            reward = int(self.heading[1])*0.25 - 0.25
+            reward = round(self.heading[1])*0.25 - 0.25
             self.state = self.getIR()
         elif action == 3:
             #turn Right
             self.heading = np.matmul(self.r_right,self.heading)
-            reward = int(self.heading[1])*0.25 - 0.25
+            reward = round(self.heading[1])*0.25 - 0.25
             self.state = self.getIR()
         
         #This moves the trees and makes a new row if the ronde has moved forward enough
         self.checkTreeRow()
         
-        return np.array(self.state), np.array(self.heading), reward, self.done, {}
+        return np.array(self.state), reward, self.done, {}
         #return np.array(self.state), reward, self.done, {}
         
     def reset(self):
@@ -291,14 +295,13 @@ class sonarEnv(core.Env):
         # gc.collect()
         # self.gan = ARGANmodel.ARGAN()
         # self.gan.load_weights(self.ganWeights)
-        return self.state, self.heading
+        return self.state
         
     #The render functions all generate images, they have different properties and were ad hoc added as needed. Technically not necessary 
-    def plot_results(self, avg_score_history, filename):
+    def plot_results(self, avg_score_history,steps_arr, filename):
         fig, ax = plt.subplots()
-        ax.plot(steps_arr, score_arr,'--', color='black')
-        ax.scatter(steps_arr, score_arr, c=color_indices, cmap=colormap)
-        
+        ax.plot(steps_arr,  avg_score_history,'--', color='black')
+        ax.scatter(steps_arr,  avg_score_history, c=color_indices, cmap=colormap)
         
         plt.plot(avg_score_history)
         plt.title('Results '+filename, fontsize=14)
@@ -322,9 +325,20 @@ class sonarEnv(core.Env):
             # idx = np.random.randint(0, t.LeafPos.shape[0], 3000)
             DroneToLeaf = t.LeafPos-self.pos
             Distances = np.linalg.norm(DroneToLeaf,axis=1)
+            Z_impossible_to_see_leaves_greaterthan = np.where((t.LeafPos[:,2] - self.pos[2]) > 4.3)
+            Z_impossible_to_see_leaves_lessthan = np.where((t.LeafPos[:,2] - self.pos[2]) < 4.3)
+            #remove these from t.leafPos
             idx = np.where(Distances < 4.3)
+            #print(idx)
+            for element in idx[0]:
+                if element in Z_impossible_to_see_leaves_lessthan[0]:
+                    np.delete(idx[0], np.where(idx[0] == element))
+            
             lg = t.LeafPos[idx]
             idx1 = np.where(Distances > 4.3)
+            for element in idx1[0]:
+                if element in Z_impossible_to_see_leaves_greaterthan[0]:
+                    np.delete(idx1[0], np.where(idx1[0] == element))
             lr = t.LeafPos[idx1]
             axis[0].plot(lr[:,0],lr[:,1],'g.')
             axis[0].plot(lg[:,0],lg[:,1],'r.')
@@ -349,12 +363,21 @@ class sonarEnv(core.Env):
             # idx = np.random.randint(0, t.LeafPos.shape[0], 3000)
             DroneToLeaf = t.LeafPos-self.pos
             Distances = np.linalg.norm(DroneToLeaf,axis=1)
+            Z_impossible_to_see_leaves_greaterthan = np.where((t.LeafPos[:,2] - self.pos[2]) > 4.3)
+            Z_impossible_to_see_leaves_lessthan = np.where((t.LeafPos[:,2] - self.pos[2]) < 4.3)
+            #remove these from t.leafPos
             idx = np.where(Distances < 4.3)
-            lr = t.LeafPos[idx]
+            for element in idx[0]:
+                if element in Z_impossible_to_see_leaves_lessthan[0]:
+                    np.delete(idx[0], np.where(idx[0] == element))
+            lg = t.LeafPos[idx]
             idx1 = np.where(Distances > 4.3)
-            lg = t.LeafPos[idx1]
-            axis[0].plot(lg[:,0],lg[:,1],'g.')
-            axis[0].plot(lr[:,0],lr[:,1],'r.')
+            for element in idx1[0]:
+                if element in Z_impossible_to_see_leaves_greaterthan[0]:
+                    np.delete(idx1[0], np.where(idx1[0] == element))
+            lr = t.LeafPos[idx1]
+            axis[0].plot(lr[:,0],lr[:,1],'g.')
+            axis[0].plot(lg[:,0],lg[:,1],'r.')
             
             if self.checkTreeDist(t):
                 axis[0].plot(t.center[0],t.center[1],'k*')
@@ -372,8 +395,8 @@ class sonarEnv(core.Env):
             }
         
         # For Simulated Enviroment
-        axis[0].plot(self.pos[0],self.pos[1],'b*', markersize=(self.dronesize*1))
-        axis[0].plot(self.pos[0]+self.heading[0],self.pos[1]+self.heading[1],'b.', markersize=(self.dronesize*1 ))
+        axis[0].plot(self.pos[0],self.pos[1],'b*', markersize=(self.dronesize))
+        axis[0].plot(self.pos[0]+self.heading[0],self.pos[1]+self.heading[1],'b.', markersize=(self.dronesize))
         axis[0].axis(xmin=self.pos[0]-10,xmax=self.pos[0]+10)
         axis[0].axis(ymin=self.pos[1]-6,ymax=self.pos[1]+6)
         axis[0].set_title("Simulated Env. & Agent Obs: Ep-"+str(episode)+" Step-"+str(i) +" Dir-"+str(compass_dict[int(self.heading[1])])+" Rew-"+str(reward))
