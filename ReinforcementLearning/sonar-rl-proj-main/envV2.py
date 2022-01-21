@@ -298,19 +298,7 @@ class sonarEnv(core.Env):
         return self.state
         
     #The render functions all generate images, they have different properties and were ad hoc added as needed. Technically not necessary 
-    def plot_results(self, avg_score_history,steps_arr, filename):
-        fig, ax = plt.subplots()
-        ax.plot(steps_arr,  avg_score_history,'--', color='black')
-        ax.scatter(steps_arr,  avg_score_history, c=color_indices, cmap=colormap)
-        
-        plt.plot(avg_score_history)
-        plt.title('Results '+filename, fontsize=14)
-        plt.xlabel('Num. Episodes', fontsize=14)
-        plt.ylabel('Avg. Score', fontsize=14)
-        plt.grid(True)
-        plt.savefig('outputs/ep_graph/'+filename+'_result.png',transparent=False)
-        plt.show()
-        plt.close()
+    
         
     def render(self,i,episode,reward):
         figure, axis = plt.subplots(2, 1)
