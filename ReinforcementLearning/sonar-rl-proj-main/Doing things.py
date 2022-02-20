@@ -1,16 +1,18 @@
 # Simple script to demonstrate how to use the environment as a black box.
 
 # Import the environment
+import time
+
+# other dependencies
+import matplotlib
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.colors import ListedColormap
+
 import envV2 as ENV
 #Import agent + policy model : Reinforce
 from Reinforce_keras import Agent
-# other dependencies
-import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
-import matplotlib.patches as mpatches
-import numpy as np
-import time
 
 # hyperparameters
 learning_rate = 3e-4
@@ -18,10 +20,10 @@ learning_rate = 3e-4
 # Constants
 gamma = 0.99
 n_steps = 30
-n_episodes = 10000
+n_episodes = 100
 num_inputs = 10000
 num_actions = 4
-filename = "reinforce_7L_Weights_final"
+filename = "reinforce_7L_Weights_final_test1"
 #Load the environment, it has a number of variables that can be initailized.
 #Here we just set the movement speed of the drone and drone size radius.
 env = ENV.sonarEnv(rotationAngle=90)
@@ -29,7 +31,7 @@ agent = Agent(ALPHA=learning_rate,
               GAMMA=gamma, 
               input_dims=num_inputs, 
               n_actions=num_actions,
-              load = True, 
+              load = False, 
               fname_policy=str("models/"+filename+"_policy.h5"))
 
 
@@ -47,7 +49,8 @@ for i in range(n_episodes):
     agent.reset_ep_graph()
     while not done and steps < n_steps:
         #select action
-        action = agent.choose_action(state)
+        #action = agent.choose_action(state)
+        action = 1
         #step
         new_state, reward, done, info = env.step(action)
         rewards.append(reward)

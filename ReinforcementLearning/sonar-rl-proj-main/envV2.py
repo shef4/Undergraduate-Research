@@ -1,20 +1,20 @@
-import numpy as np
-from numpy import sin, cos, pi
-
-from gym import core, spaces
-from gym.utils import seeding
 import csv
-import scipy.signal
-import scipy.io
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-import GenOnlyModel
-import tensorflow as tf
 # tf.compat.v1.enable_eager_execution()
 import gc
-import keras.backend
 
+import keras.backend
+import matplotlib.pyplot as plt
+import numpy as np
 import objgraph
+import scipy.io
+import scipy.signal
+import tensorflow as tf
+from gym import core, spaces
+from gym.utils import seeding
+from mpl_toolkits.mplot3d import Axes3D
+from numpy import cos, pi, sin
+
+import GenOnlyModel
 
 a = 1
 #TASK:

@@ -3,24 +3,30 @@
 Created on Fri Jun 26 18:31:48 2020
 
 @author: sefun
+    todo: 
+    sum and averaging rewards
+
+    agent and envirments
+    summing for each episode
+
+
 """
 import tensorflow as tf
-print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
-from tensorflow.keras.layers import Dense,Activation, Input, concatenate, Flatten, Dropout
-from tensorflow.keras.models import Model, load_model
-from tensorflow.keras import activations
-from tensorflow.keras.optimizers import Adam
-from keras.utils.generic_utils import get_custom_objects
-import tensorflow.keras.backend as K
-import numpy as np
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import LabelEncoder
 import matplotlib
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
-import matplotlib.patches as mpatches 
 import numpy as np
 import pandas as pd
+import tensorflow.keras.backend as K
+from keras.utils.generic_utils import get_custom_objects
+from matplotlib.colors import ListedColormap
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+from tensorflow.keras import activations
+from tensorflow.keras.layers import (Activation, Dense, Dropout, Flatten,
+                                     Input, concatenate)
+from tensorflow.keras.models import Model, load_model
+from tensorflow.keras.optimizers import Adam
+
 
 class Agent(object):
     def __init__(self, ALPHA, GAMMA=0.99,n_actions=4, input_dims=128,load = False,
@@ -108,7 +114,6 @@ class Agent(object):
         probabilities = self.predict.predict(state)
         action = np.random.choice(a = self.action_space, p=probabilities[0])
         return action
-    
     
     def store_transition(self, observation, action, rewards, steps):
         state = observation
